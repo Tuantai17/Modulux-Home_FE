@@ -17,6 +17,28 @@
       </div>
     </div>
 
+    <div class="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <button
+        v-for="card in statusCards"
+        :key="card.key"
+        type="button"
+        class="rounded-2xl border bg-white p-5 text-left shadow-sm transition-all"
+        :class="activeStatusCard === card.key ? card.activeClass : 'border-gray-200 hover:border-gray-300 hover:-translate-y-0.5'"
+        @click="setStatusCard(card.key)"
+      >
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">Enquiry Status</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-500">{{ card.label }}</h3>
+          </div>
+          <span class="rounded-full px-3 py-1 text-xs font-semibold" :class="card.badgeClass">
+            {{ card.shortLabel }}
+          </span>
+        </div>
+        <p class="mt-4 text-3xl font-semibold tracking-tight text-gray-950">{{ card.value }}</p>
+      </button>
+    </div>
+
     <!-- Tabs -->
     <div class="mb-5 flex gap-1 overflow-x-auto rounded-lg bg-gray-100 p-1">
       <button
@@ -277,11 +299,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import api from '@/services/api'
 
 const contacts = ref([])
-const stats = ref({ all: 0, home_general: 0, general: 0, project: 0 })
+const stats = ref({ all: 0, home_general: 0, general: 0, project: 0, new: 0, read: 0, replied: 0, archived: 0 })
 const activeTab = ref('all')
 const statusFilter = ref('')
 const isLoading = ref(false)
@@ -293,6 +315,43 @@ const tabs = [
   { key: 'general', label: 'General' },
   { key: 'project', label: 'Project' },
 ]
+
+const activeStatusCard = computed(() => statusFilter.value || 'all')
+
+const statusCards = computed(() => [
+  {
+    key: 'new',
+    label: 'New',
+    shortLabel: 'New',
+    value: stats.value.new || 0,
+    badgeClass: 'bg-green-100 text-green-700',
+    activeClass: 'border-green-300 bg-green-50/70 shadow-[0_16px_40px_-28px_rgba(22,163,74,0.55)]',
+  },
+  {
+    key: 'read',
+    label: 'Read',
+    shortLabel: 'Read',
+    value: stats.value.read || 0,
+    badgeClass: 'bg-yellow-100 text-yellow-700',
+    activeClass: 'border-yellow-300 bg-yellow-50/70 shadow-[0_16px_40px_-28px_rgba(202,138,4,0.55)]',
+  },
+  {
+    key: 'replied',
+    label: 'Replied',
+    shortLabel: 'Replied',
+    value: stats.value.replied || 0,
+    badgeClass: 'bg-blue-100 text-blue-700',
+    activeClass: 'border-blue-300 bg-blue-50/70 shadow-[0_16px_40px_-28px_rgba(37,99,235,0.55)]',
+  },
+  {
+    key: 'archived',
+    label: 'Archived',
+    shortLabel: 'Archived',
+    value: stats.value.archived || 0,
+    badgeClass: 'bg-gray-100 text-gray-600',
+    activeClass: 'border-gray-300 bg-gray-50 shadow-[0_16px_40px_-28px_rgba(107,114,128,0.45)]',
+  },
+])
 
 const fetchContacts = async () => {
   isLoading.value = true
@@ -321,6 +380,11 @@ const fetchStats = async () => {
 
 const setTab = (key) => {
   activeTab.value = key
+  fetchContacts()
+}
+
+const setStatusCard = (key) => {
+  statusFilter.value = statusFilter.value === key ? '' : key
   fetchContacts()
 }
 

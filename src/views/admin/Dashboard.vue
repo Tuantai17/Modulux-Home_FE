@@ -7,41 +7,61 @@
           <p class="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-200/80">Operations Overview</p>
           <h1 class="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Welcome back to Modulux Admin</h1>
           <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-            Monitor content, respond to new enquiries, and keep your digital workspace updated from one streamlined dashboard.
+            Monitor content, review key numbers, and respond to new enquiries from one streamlined dashboard.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:min-w-[420px] xl:max-w-[520px] xl:flex-1">
-          <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:min-w-[520px] xl:max-w-[640px] xl:flex-1 xl:grid-cols-4">
+          <RouterLink
+            to="/admin/projects"
+            class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/14"
+          >
             <p class="text-xs font-medium uppercase tracking-[0.18em] text-slate-300">Projects</p>
             <p class="mt-3 text-2xl font-semibold text-white">
               <span v-if="loadingProjects" class="text-slate-400">...</span>
               <span v-else>{{ totalProjects }}</span>
             </p>
-          </div>
-          <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
+          </RouterLink>
+          <RouterLink
+            to="/admin/blogs"
+            class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/14"
+          >
             <p class="text-xs font-medium uppercase tracking-[0.18em] text-slate-300">Blogs</p>
             <p class="mt-3 text-2xl font-semibold text-white">
               <span v-if="loadingBlogs" class="text-slate-400">...</span>
               <span v-else>{{ totalBlogs }}</span>
             </p>
-          </div>
-          <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
+          </RouterLink>
+          <RouterLink
+            to="/admin/contacts"
+            class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/14"
+          >
             <p class="text-xs font-medium uppercase tracking-[0.18em] text-slate-300">Enquiries</p>
             <p class="mt-3 text-2xl font-semibold text-white">
               <span v-if="loadingInquiries" class="text-slate-400">...</span>
               <span v-else>{{ totalInquiries }}</span>
             </p>
-          </div>
+          </RouterLink>
+          <RouterLink
+            to="/admin/subscribers"
+            class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/14"
+          >
+            <p class="text-xs font-medium uppercase tracking-[0.18em] text-slate-300">Subscribers</p>
+            <p class="mt-3 text-2xl font-semibold text-white">
+              <span v-if="loadingSubscribers" class="text-slate-400">...</span>
+              <span v-else>{{ totalSubscribers }}</span>
+            </p>
+          </RouterLink>
         </div>
       </div>
     </section>
 
-    <section class="grid grid-cols-1 gap-5 md:grid-cols-3">
-      <article
+    <section class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <RouterLink
         v-for="card in statCards"
         :key="card.title"
-        class="group rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_50px_-30px_rgba(15,23,42,0.5)]"
+        :to="card.to"
+        class="group block rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_20px_50px_-30px_rgba(15,23,42,0.5)]"
       >
         <div class="flex items-center justify-between gap-4">
           <div>
@@ -59,109 +79,225 @@
           </div>
         </div>
         <p class="mt-4 text-sm leading-6 text-slate-500">{{ card.description }}</p>
-      </article>
+      </RouterLink>
     </section>
 
-    <section class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+    <section class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+      <section class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
         <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Recent Enquiries</p>
-            <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Latest 5 enquiries</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Audience</p>
+            <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Latest subscribers</h2>
           </div>
           <RouterLink
-            to="/admin/contacts"
+            to="/admin/subscribers"
             class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
           >
             View all
           </RouterLink>
         </div>
 
-        <div v-if="loadingRecentContacts" class="space-y-4">
-          <div v-for="item in 5" :key="item" class="h-24 animate-pulse rounded-2xl bg-slate-100"></div>
+        <div v-if="loadingRecentSubscribers" class="space-y-4">
+          <div v-for="item in 5" :key="item" class="h-20 animate-pulse rounded-2xl bg-slate-100"></div>
         </div>
 
         <div
-          v-else-if="recentContacts.length === 0"
+          v-else-if="recentSubscribers.length === 0"
           class="rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center text-sm font-medium text-slate-500"
         >
-          No enquiries available yet.
+          No subscribers available yet.
         </div>
 
         <div v-else class="space-y-4">
           <article
-            v-for="contact in recentContacts"
-            :key="contact.id"
-            class="rounded-2xl border border-slate-200 p-4 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 sm:p-5"
+            v-for="subscriber in recentSubscribers"
+            :key="subscriber.id"
+            class="rounded-2xl border border-slate-200 p-4 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50"
           >
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2.5">
-                  <h3 class="text-base font-semibold text-slate-900">
-                    {{ contact.first_name }} {{ contact.last_name }}
-                  </h3>
-                  <span :class="statusBadgeClass(contact.status)">
-                    {{ contact.status }}
-                  </span>
-                  <span :class="typeBadgeClass(contact.enquiry_type)">
-                    {{ typeLabel(contact.enquiry_type) }}
-                  </span>
+                <h3 class="text-base font-semibold text-slate-900">
+                  {{ subscriber.first_name }} {{ subscriber.last_name }}
+                </h3>
+                <div class="mt-3 space-y-1 text-sm text-slate-500">
+                  <p class="break-all">{{ subscriber.email }}</p>
+                  <p>{{ subscriber.phone || 'No phone number' }}</p>
                 </div>
-
-                <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
-                  <span class="break-all">{{ contact.email }}</span>
-                  <span>{{ formatPhone(contact.country_code, contact.phone) }}</span>
-                </div>
-
-                <p v-if="contact.message" class="mt-4 line-clamp-2 text-sm leading-7 text-slate-600">
-                  {{ contact.message }}
-                </p>
-                <p v-else class="mt-4 text-sm italic text-slate-400">No message provided.</p>
               </div>
 
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:min-w-[220px] lg:flex-col lg:items-end lg:text-right">
-                <div>
-                  <p class="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Created</p>
-                  <p class="mt-1 text-sm text-slate-500">{{ formatDate(contact.created_at) }}</p>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2 lg:justify-end">
-                  <button
-                    v-if="contact.status === 'new'"
-                    type="button"
-                    class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-                    :disabled="isUpdatingContact(contact.id)"
-                    @click="updateContactStatus(contact.id, 'read')"
-                  >
-                    <svg
-                      v-if="isUpdatingContact(contact.id)"
-                      class="h-3.5 w-3.5 animate-spin"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
-                      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-linecap="round" stroke-width="3" />
-                    </svg>
-                    {{ isUpdatingContact(contact.id) ? 'Updating...' : 'Mark as read' }}
-                  </button>
-                  <button
-                    type="button"
-                    class="inline-flex items-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                    :disabled="isUpdatingContact(contact.id)"
-                    @click="openDetail(contact)"
-                  >
-                    Open detail
-                  </button>
-                  <a
-                    :href="replyLaterLink(contact)"
-                    class="inline-flex items-center rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:border-violet-300 hover:bg-violet-100"
-                  >
-                    Reply later
-                  </a>
-                </div>
+              <div class="sm:text-right">
+                <p class="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Joined</p>
+                <p class="mt-1 text-sm text-slate-500">{{ formatDate(subscriber.created_at) }}</p>
               </div>
             </div>
           </article>
         </div>
+      </section>
+
+      <section class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Recent Content</p>
+            <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Latest blogs</h2>
+          </div>
+          <RouterLink
+            to="/admin/blogs"
+            class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
+          >
+            View all
+          </RouterLink>
+        </div>
+
+        <div v-if="loadingRecentBlogs" class="space-y-4">
+          <div v-for="item in 5" :key="item" class="h-24 animate-pulse rounded-2xl bg-slate-100"></div>
+        </div>
+
+        <div
+          v-else-if="recentBlogs.length === 0"
+          class="rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center text-sm font-medium text-slate-500"
+        >
+          No blogs available yet.
+        </div>
+
+        <div v-else class="space-y-4">
+          <article
+            v-for="blog in recentBlogs"
+            :key="blog.id"
+            class="rounded-2xl border border-slate-200 p-4 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50"
+          >
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-base font-semibold text-slate-900">
+                    {{ blog.title }}
+                  </h3>
+                  <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                    {{ blog.type }}
+                  </span>
+                </div>
+                <p class="mt-3 line-clamp-2 text-sm leading-6 text-slate-500">
+                  {{ blog.excerpt || 'No excerpt available.' }}
+                </p>
+                <a
+                  :href="blog.source_url"
+                  target="_blank"
+                  rel="noreferrer"
+                  class="mt-3 inline-flex max-w-full items-center text-sm font-medium text-emerald-700 transition hover:text-emerald-800"
+                >
+                  Source link
+                </a>
+              </div>
+
+              <div class="sm:text-right">
+                <p class="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Updated</p>
+                <p class="mt-1 text-sm text-slate-500">{{ formatDate(blog.updated_at) }}</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <section class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Recent Enquiries</p>
+          <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Latest 5 enquiries</h2>
+        </div>
+        <RouterLink
+          to="/admin/contacts"
+          class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
+        >
+          View all
+        </RouterLink>
+      </div>
+
+      <div v-if="loadingRecentContacts" class="space-y-4">
+        <div v-for="item in 5" :key="item" class="h-24 animate-pulse rounded-2xl bg-slate-100"></div>
+      </div>
+
+      <div
+        v-else-if="recentContacts.length === 0"
+        class="rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center text-sm font-medium text-slate-500"
+      >
+        No enquiries available yet.
+      </div>
+
+      <div v-else class="space-y-4">
+        <article
+          v-for="contact in recentContacts"
+          :key="contact.id"
+          class="rounded-2xl border border-slate-200 p-4 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 sm:p-5"
+        >
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2.5">
+                <h3 class="text-base font-semibold text-slate-900">
+                  {{ contact.first_name }} {{ contact.last_name }}
+                </h3>
+                <span :class="statusBadgeClass(contact.status)">
+                  {{ contact.status }}
+                </span>
+                <span :class="typeBadgeClass(contact.enquiry_type)">
+                  {{ typeLabel(contact.enquiry_type) }}
+                </span>
+              </div>
+
+              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
+                <span class="break-all">{{ contact.email }}</span>
+                <span>{{ formatPhone(contact.country_code, contact.phone) }}</span>
+              </div>
+
+              <p v-if="contact.message" class="mt-4 line-clamp-2 text-sm leading-7 text-slate-600">
+                {{ contact.message }}
+              </p>
+              <p v-else class="mt-4 text-sm italic text-slate-400">No message provided.</p>
+            </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:min-w-[220px] lg:flex-col lg:items-end lg:text-right">
+              <div>
+                <p class="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Created</p>
+                <p class="mt-1 text-sm text-slate-500">{{ formatDate(contact.created_at) }}</p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+                <button
+                  v-if="contact.status === 'new'"
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  :disabled="isUpdatingContact(contact.id)"
+                  @click="updateContactStatus(contact.id, 'read')"
+                >
+                  <svg
+                    v-if="isUpdatingContact(contact.id)"
+                    class="h-3.5 w-3.5 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
+                    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-linecap="round" stroke-width="3" />
+                  </svg>
+                  {{ isUpdatingContact(contact.id) ? 'Updating...' : 'Mark as read' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                  :disabled="isUpdatingContact(contact.id)"
+                  @click="openDetail(contact)"
+                >
+                  Open detail
+                </button>
+                <a
+                  :href="replyLaterLink(contact)"
+                  class="inline-flex items-center rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:border-violet-300 hover:bg-violet-100"
+                >
+                  Reply later
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
 
     <Teleport to="body">
@@ -384,33 +520,43 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import api from '@/services/api'
 import { getBlogs } from '@/services/blogApi'
 
 const totalProjects = ref(0)
 const totalBlogs = ref(0)
 const totalInquiries = ref(0)
+const totalSubscribers = ref(0)
 const recentContacts = ref([])
+const recentSubscribers = ref([])
+const recentBlogs = ref([])
+
 const selectedContact = ref(null)
 const updatingContactIds = ref([])
+
 const toast = ref({
   visible: false,
   type: 'success',
   title: '',
   message: '',
 })
+
 let toastTimeoutId = null
 
 const loadingProjects = ref(true)
 const loadingBlogs = ref(true)
 const loadingInquiries = ref(true)
+const loadingSubscribers = ref(true)
 const loadingRecentContacts = ref(true)
+const loadingRecentSubscribers = ref(true)
+const loadingRecentBlogs = ref(true)
 
 const statCards = computed(() => [
   {
     eyebrow: 'Projects',
     title: 'Total Projects',
+    to: '/admin/projects',
     value: totalProjects.value,
     loading: loadingProjects.value,
     description: 'Track the number of projects currently available in the portfolio.',
@@ -420,6 +566,7 @@ const statCards = computed(() => [
   {
     eyebrow: 'Content',
     title: 'Total Blogs',
+    to: '/admin/blogs',
     value: totalBlogs.value,
     loading: loadingBlogs.value,
     description: 'Keep an eye on how many published and managed articles are live.',
@@ -429,11 +576,22 @@ const statCards = computed(() => [
   {
     eyebrow: 'Contacts',
     title: 'Total Enquiries',
+    to: '/admin/contacts',
     value: totalInquiries.value,
     loading: loadingInquiries.value,
     description: 'Monitor incoming leads and contact form submissions in real time.',
     iconWrapperClass: 'bg-violet-100 text-violet-600',
     icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9',
+  },
+  {
+    eyebrow: 'Audience',
+    title: 'Total Subscribers',
+    to: '/admin/subscribers',
+    value: totalSubscribers.value,
+    loading: loadingSubscribers.value,
+    description: 'Track newsletter signups collected from the public website.',
+    iconWrapperClass: 'bg-amber-100 text-amber-600',
+    icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   },
 ])
 
@@ -454,7 +612,6 @@ const toastProgressClass = computed(() => {
     ? 'bg-linear-to-r from-emerald-400 via-emerald-500 to-teal-500'
     : 'bg-linear-to-r from-rose-400 via-rose-500 to-orange-400'
 })
-
 
 const showToast = ({ type = 'success', title, message }) => {
   if (toastTimeoutId) {
@@ -482,40 +639,56 @@ const hideToast = () => {
   toast.value.visible = false
 }
 
-const fetchProjectsCount = async () => {
+const fetchProjects = async () => {
   try {
     const response = await api.get('/api/v1/projects/')
     totalProjects.value = response.data?.length || 0
   } catch (error) {
-    console.error('Failed to fetch projects count', error)
+    console.error('Failed to fetch projects', error)
   } finally {
     loadingProjects.value = false
   }
 }
 
-const fetchBlogsCount = async () => {
+const fetchBlogs = async () => {
   try {
-    const response = await getBlogs({ page: 1, page_size: 1 })
+    const response = await getBlogs({ page: 1, page_size: 50 })
     totalBlogs.value = response.total || 0
   } catch (error) {
-    console.error('Failed to fetch blogs count', error)
+    console.error('Failed to fetch blogs', error)
   } finally {
     loadingBlogs.value = false
   }
 }
 
-const fetchInquiriesCount = async () => {
+const fetchInquiryStats = async () => {
   try {
     const response = await api.get('/api/v1/contacts/stats')
     totalInquiries.value = response.data?.all || 0
   } catch (error) {
-    console.error('Failed to fetch enquiries count', error)
+    console.error('Failed to fetch enquiry stats', error)
   } finally {
     loadingInquiries.value = false
   }
 }
 
-const fetchRecentContacts = async () => {
+const fetchSubscribersCount = async () => {
+  try {
+    const response = await api.get('/api/v1/subscribers/', {
+      params: {
+        skip: 0,
+        limit: 1000,
+      },
+    })
+    totalSubscribers.value = Array.isArray(response.data) ? response.data.length : 0
+  } catch (error) {
+    console.error('Failed to fetch subscribers', error)
+  } finally {
+    loadingSubscribers.value = false
+  }
+}
+
+const fetchContacts = async () => {
   try {
     const response = await api.get('/api/v1/contacts/', {
       params: {
@@ -523,17 +696,46 @@ const fetchRecentContacts = async () => {
         limit: 5,
       },
     })
-    recentContacts.value = response.data || []
+    recentContacts.value = Array.isArray(response.data) ? response.data : []
   } catch (error) {
-    console.error('Failed to fetch recent contacts', error)
+    console.error('Failed to fetch contacts', error)
   } finally {
     loadingRecentContacts.value = false
   }
 }
 
+const fetchRecentSubscribers = async () => {
+  try {
+    const response = await api.get('/api/v1/subscribers/', {
+      params: {
+        skip: 0,
+        limit: 5,
+      },
+    })
+    recentSubscribers.value = Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Failed to fetch recent subscribers', error)
+  } finally {
+    loadingRecentSubscribers.value = false
+  }
+}
+
+const fetchRecentBlogs = async () => {
+  try {
+    const response = await getBlogs({ page: 1, page_size: 5 })
+    recentBlogs.value = Array.isArray(response.items) ? response.items : []
+  } catch (error) {
+    console.error('Failed to fetch recent blogs', error)
+  } finally {
+    loadingRecentBlogs.value = false
+  }
+}
+
 const syncContactStatus = (id, status) => {
   const target = recentContacts.value.find((contact) => contact.id === id)
+
   if (target) target.status = status
+
   if (selectedContact.value?.id === id) selectedContact.value.status = status
 }
 
@@ -645,10 +847,21 @@ const typeBadgeClass = (type) => {
   return `${base} ${map[type] || 'bg-slate-100 text-slate-500'}`
 }
 
-onMounted(() => {
-  fetchProjectsCount()
-  fetchBlogsCount()
-  fetchInquiriesCount()
-  fetchRecentContacts()
+onMounted(async () => {
+  await Promise.allSettled([
+    fetchProjects(),
+    fetchBlogs(),
+    fetchInquiryStats(),
+    fetchSubscribersCount(),
+    fetchContacts(),
+    fetchRecentSubscribers(),
+    fetchRecentBlogs(),
+  ])
+})
+
+onBeforeUnmount(() => {
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId)
+  }
 })
 </script>

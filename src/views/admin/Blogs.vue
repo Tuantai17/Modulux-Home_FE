@@ -1,87 +1,127 @@
 <template>
   <div class="space-y-8">
-    <section class="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
-      <div class="rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.05)] sm:rounded-[32px] sm:p-6 lg:p-8">
-        <p class="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">Blog Sync</p>
-        <h2 class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">External Blog Control</h2>
-        <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
-          Trigger sync from the production source, import blog URLs from Excel, review sync history, and inspect the normalized blog data served by this CMS.
+    <section class="relative overflow-hidden rounded-[30px] border border-slate-200 bg-linear-to-br from-slate-950 via-slate-900 to-emerald-950 px-5 py-6 text-white shadow-[0_24px_80px_-32px_rgba(15,23,42,0.85)] sm:px-8 sm:py-8">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.18),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.18),transparent_26%)]"></div>
+      <div class="relative grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_26rem] xl:items-end">
+        <div class="max-w-3xl">
+          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200/90">Blog Operations</p>
+          <h2 class="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Manage syncs and imported articles in one place</h2>
+          <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+            Run production syncs, import Excel or single URLs, then review the normalized content feed that powers the website.
+          </p>
+
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <button
+              type="button"
+              class="inline-flex w-full items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              :disabled="syncing || importing || importingUrl"
+              @click="handleSync"
+            >
+              {{ syncing ? 'Syncing...' : 'Run Production Sync' }}
+            </button>
+            <button
+              type="button"
+              class="inline-flex w-full items-center justify-center rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/14 sm:w-auto"
+              :disabled="blogsLoading || logsLoading"
+              @click="refreshOverview"
+            >
+              Refresh data
+            </button>
+          </div>
+
+          <div class="mt-6 flex flex-wrap gap-3 text-sm text-slate-300">
+            <span class="rounded-full border border-white/10 bg-white/10 px-4 py-2">
+              {{ pagination.total }} stored blogs
+            </span>
+            <span class="rounded-full border border-white/10 bg-white/10 px-4 py-2">
+              Latest sync: {{ latestLog ? formatDateTime(latestLog.created_at) : 'No run yet' }}
+            </span>
+          </div>
+
+          <div
+            v-if="actionMessage"
+            class="mt-6 rounded-2xl border px-4 py-3 text-sm leading-6"
+            :class="actionError ? 'border-rose-400/20 bg-rose-400/10 text-rose-100' : 'border-emerald-300/20 bg-emerald-300/10 text-emerald-50'"
+          >
+            {{ actionMessage }}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <article
+            v-for="card in summaryCards"
+            :key="card.label"
+            class="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm"
+          >
+            <p class="text-xs font-semibold uppercase tracking-[0.18em]" :class="card.eyebrowClass">{{ card.label }}</p>
+            <p class="mt-3 text-3xl font-semibold tracking-tight text-white">{{ card.value }}</p>
+            <p class="mt-2 text-sm text-slate-300">{{ card.description }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid gap-5 xl:grid-cols-2">
+      <article class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.05)] sm:p-6">
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Excel Import</p>
+        <h3 class="mt-3 text-xl font-semibold text-slate-950">Upload a spreadsheet of blog URLs</h3>
+        <p class="mt-3 text-sm leading-7 text-slate-600">
+          Choose an `.xlsx` file, then import it to add new blog records or update existing ones.
         </p>
 
-        <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <button
-            type="button"
-            class="inline-flex w-full items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-            :disabled="syncing || importing"
-            @click="handleSync"
-          >
-            {{ syncing ? 'Syncing...' : 'Sync Now' }}
-          </button>
+        <div class="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Selected file</p>
+          <p class="mt-2 break-all text-sm font-medium text-slate-700">{{ selectedFileLabel }}</p>
+        </div>
 
-          <label class="inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto sm:max-w-full">
+        <div class="mt-5 flex flex-col gap-3 sm:flex-row">
+          <label class="inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto">
             <input type="file" accept=".xlsx" class="hidden" @change="onFileChange" />
-            <span class="max-w-full truncate">{{ selectedFile ? selectedFile.name : 'Choose Excel' }}</span>
+            <span>{{ selectedFile ? 'Change Excel file' : 'Choose Excel file' }}</span>
           </label>
 
           <button
             type="button"
-            class="inline-flex w-full items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-            :disabled="!selectedFile || syncing || importing"
+            class="inline-flex w-full items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            :disabled="!selectedFile || syncing || importing || importingUrl"
             @click="handleImport"
           >
             {{ importing ? 'Importing...' : 'Import Excel' }}
           </button>
         </div>
+      </article>
 
-        <div class="mt-6 border-t border-slate-200 pt-6">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Import from URL</p>
-          <div class="mt-3 flex flex-col gap-3 sm:flex-row">
-            <input
-              v-model="urlInput"
-              type="url"
-              placeholder="https://example.com/blog-post"
-              class="flex-1 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-              :disabled="syncing || importing || importingUrl"
-              @keydown.enter="handleImportUrl"
-            />
-            <button
-              type="button"
-              class="inline-flex w-full items-center justify-center rounded-full bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-              :disabled="!urlInput?.trim() || syncing || importing || importingUrl"
-              @click="handleImportUrl"
-            >
-              {{ importingUrl ? 'Importing...' : 'Import URL' }}
-            </button>
-          </div>
-        </div>
-
-        <p v-if="actionMessage" class="mt-4 text-sm" :class="actionError ? 'text-rose-600' : 'text-emerald-700'">
-          {{ actionMessage }}
+      <article class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.05)] sm:p-6">
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">URL Import</p>
+        <h3 class="mt-3 text-xl font-semibold text-slate-950">Import a single article by URL</h3>
+        <p class="mt-3 text-sm leading-7 text-slate-600">
+          Paste one article URL to quickly import it without waiting for a full sync cycle.
         </p>
-      </div>
 
-      <div class="grid grid-cols-2 gap-4 lg:grid-cols-1">
-        <article class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.04)]">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Latest Run</p>
-          <p class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">{{ latestSummary.total }}</p>
-          <p class="mt-2 text-xs text-slate-500 sm:text-sm">Total processed</p>
-        </article>
-        <article class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.04)]">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Inserted</p>
-          <p class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">{{ latestSummary.inserted }}</p>
-          <p class="mt-2 text-xs text-slate-500 sm:text-sm">New blogs created</p>
-        </article>
-        <article class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.04)]">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Updated</p>
-          <p class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">{{ latestSummary.updated }}</p>
-          <p class="mt-2 text-xs text-slate-500 sm:text-sm">Existing blogs refreshed</p>
-        </article>
-        <article class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.04)]">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Skipped</p>
-          <p class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">{{ latestSummary.skipped }}</p>
-          <p class="mt-2 text-xs text-slate-500 sm:text-sm">No content changes detected</p>
-        </article>
-      </div>
+        <label class="mt-5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          Article URL
+          <input
+            v-model="urlInput"
+            type="url"
+            placeholder="https://example.com/blog-post"
+            class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+            :disabled="syncing || importing || importingUrl"
+            @keydown.enter="handleImportUrl"
+          />
+        </label>
+
+        <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm text-slate-500">Imports one post and refreshes the current list automatically.</p>
+          <button
+            type="button"
+            class="inline-flex w-full items-center justify-center rounded-full bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            :disabled="!urlInput?.trim() || syncing || importing || importingUrl"
+            @click="handleImportUrl"
+          >
+            {{ importingUrl ? 'Importing...' : 'Import URL' }}
+          </button>
+        </div>
+      </article>
     </section>
 
     <section class="grid gap-8 2xl:grid-cols-[minmax(0,1.55fr)_23rem]">
@@ -90,6 +130,9 @@
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Stored Blogs</p>
             <h3 class="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Normalized content</h3>
+            <p class="mt-2 text-sm text-slate-500">
+              {{ pagination.total }} records available. Review metadata, adjust news type, and open the full article content.
+            </p>
           </div>
           <button
             type="button"
@@ -107,10 +150,13 @@
         <div v-else-if="blogs.length === 0" class="pt-6 text-sm text-slate-500">No blogs have been synced yet.</div>
 
         <div v-else class="space-y-4 pt-6">
-          <article v-for="blog in blogs" :key="blog.id" class="rounded-[22px] border border-slate-200 p-4 transition hover:border-slate-300 hover:bg-slate-50/60 sm:rounded-[24px] sm:p-5">
+          <article v-for="blog in blogs" :key="blog.id" class="rounded-[24px] border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-[0_18px_40px_-30px_rgba(15,23,42,0.35)] sm:p-5">
             <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div class="min-w-0 flex-1">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{{ formatDate(blog.updated_at) }}</p>
+                <div class="flex flex-wrap items-center gap-2">
+                  <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Updated {{ formatDate(blog.updated_at) }}</p>
+                  <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Slug: {{ blog.slug }}</span>
+                </div>
                 <h4 class="mt-2 break-words text-base font-semibold text-slate-950 sm:text-lg">{{ blog.title }}</h4>
                 <div class="mt-3 flex flex-wrap gap-2">
                   <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
@@ -122,52 +168,59 @@
                   >
                     {{ blog.is_type_overridden ? 'Manual type' : 'Source type' }}
                   </span>
+                  <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
+                    Source: {{ blog.source_type }}
+                  </span>
                 </div>
                 <p class="mt-3 break-words text-sm leading-6 text-slate-600">{{ blog.excerpt }}</p>
                 <a :href="blog.source_url" target="_blank" rel="noreferrer" class="mt-3 inline-flex max-w-full items-center gap-2 break-all text-sm font-medium text-emerald-700 transition hover:text-emerald-800">
-                  {{ blog.source_url }}
+                  Open source article
                 </a>
               </div>
               <img v-if="blog.image_url" :src="blog.image_url" :alt="blog.title" class="order-first h-48 w-full rounded-2xl border border-slate-200 object-cover md:order-none md:h-28 md:w-44 md:shrink-0" />
             </div>
-            <div class="mt-4 grid gap-3 xl:grid-cols-[minmax(0,240px)_auto_auto_1fr] xl:items-center">
-              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                News Type
-                <select
-                  v-model="typeDrafts[blog.id]"
-                  class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                  :disabled="Boolean(typeSaving[blog.id])"
+
+            <div class="mt-5 rounded-[22px] bg-slate-50 p-4">
+              <div class="grid gap-3 xl:grid-cols-[minmax(0,240px)_auto_auto_1fr] xl:items-center">
+                <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  News Type
+                  <select
+                    v-model="typeDrafts[blog.id]"
+                    class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    :disabled="Boolean(typeSaving[blog.id])"
+                  >
+                    <option v-for="type in BLOG_TYPES" :key="type" :value="type">{{ type }}</option>
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  class="inline-flex w-full items-center justify-center rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 xl:w-auto"
+                  :disabled="Boolean(typeSaving[blog.id]) || !hasTypeChanged(blog)"
+                  @click="saveBlogType(blog)"
                 >
-                  <option v-for="type in BLOG_TYPES" :key="type" :value="type">{{ type }}</option>
-                </select>
-              </label>
+                  {{ typeSaving[blog.id] ? 'Saving...' : 'Save type' }}
+                </button>
 
-              <button
-                type="button"
-                class="inline-flex w-full items-center justify-center rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 xl:w-auto"
-                :disabled="Boolean(typeSaving[blog.id]) || !hasTypeChanged(blog)"
-                @click="saveBlogType(blog)"
-              >
-                {{ typeSaving[blog.id] ? 'Saving...' : 'Save type' }}
-              </button>
+                <button
+                  type="button"
+                  class="inline-flex w-full items-center justify-center rounded-full border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 xl:w-auto"
+                  :disabled="Boolean(typeSaving[blog.id]) || !blog.is_type_overridden"
+                  @click="resetBlogType(blog)"
+                >
+                  Use source
+                </button>
 
-              <button
-                type="button"
-                class="inline-flex w-full items-center justify-center rounded-full border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 xl:w-auto"
-                :disabled="Boolean(typeSaving[blog.id]) || !blog.is_type_overridden"
-                @click="resetBlogType(blog)"
-              >
-                Use source
-              </button>
-
-              <p class="break-words text-xs text-slate-500 xl:text-right">
-                Source: {{ blog.source_type }}
-              </p>
+                <p class="break-words text-xs text-slate-500 xl:text-right">
+                  Last synced: {{ formatDateTime(blog.last_synced_at) }}
+                </p>
+              </div>
             </div>
-            <div class="mt-4 grid gap-2 text-xs text-slate-500 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+
+            <div class="mt-4 grid gap-3 text-xs text-slate-500 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                <span class="break-all rounded-full bg-slate-100 px-3 py-1">Slug: {{ blog.slug }}</span>
-                <span class="rounded-full bg-slate-100 px-3 py-1">Last synced: {{ formatDateTime(blog.last_synced_at) }}</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">Created: {{ formatDate(blog.created_at) }}</span>
+                <span class="break-all rounded-full bg-slate-100 px-3 py-1">{{ blog.source_url }}</span>
               </div>
 
               <div class="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
@@ -218,6 +271,7 @@
         <div class="border-b border-slate-200 pb-5">
           <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Sync Logs</p>
           <h3 class="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Recent history</h3>
+          <p class="mt-2 text-sm text-slate-500">Monitor each sync run and review how many records were inserted, updated, or skipped.</p>
         </div>
 
         <div v-if="logsLoading" class="space-y-3 pt-6">
@@ -386,8 +440,41 @@ const deleteConfirm = reactive({ visible: false, loading: false, blog: null })
 
 const latestLog = computed(() => syncLogs.value[0] || null)
 const latestSummary = computed(() => latestLog.value || { total: 0, inserted: 0, updated: 0, skipped: 0 })
+const selectedFileLabel = computed(() => selectedFile.value?.name || 'No Excel file selected yet.')
+const summaryCards = computed(() => [
+  {
+    label: 'Stored Blogs',
+    value: pagination.value.total,
+    description: 'Entries currently available in the CMS.',
+    eyebrowClass: 'text-emerald-200/85',
+  },
+  {
+    label: 'Latest Run',
+    value: latestSummary.value.total,
+    description: 'Total records processed in the newest sync.',
+    eyebrowClass: 'text-sky-200/85',
+  },
+  {
+    label: 'Inserted',
+    value: latestSummary.value.inserted,
+    description: 'New blogs created during the newest run.',
+    eyebrowClass: 'text-amber-200/85',
+  },
+  {
+    label: 'Updated',
+    value: latestSummary.value.updated,
+    description: 'Existing blogs refreshed during the newest run.',
+    eyebrowClass: 'text-violet-200/85',
+  },
+])
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const refreshOverview = async () => {
+  actionMessage.value = ''
+  actionError.value = false
+  await Promise.all([fetchBlogs(currentPage.value), fetchLogs()])
+}
 
 const fetchBlogs = async (page = 1) => {
   blogsLoading.value = true

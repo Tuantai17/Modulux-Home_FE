@@ -33,26 +33,35 @@
 
         <div class="header__actions">
           <span class="header__divider" aria-hidden="true"></span>
-          <router-link :to="searchPath" class="header__search" aria-label="Search">
+          <button type="button" class="header__search" aria-label="Search" @click="openSearch">
             <svg class="header__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="m21 21-4.35-4.35" stroke-linecap="round" />
               <circle cx="11" cy="11" r="7" />
             </svg>
-          </router-link>
+          </button>
           <router-link :to="cta.path" class="header__cta">
             {{ cta.label }}
           </router-link>
         </div>
       </div>
 
-      <button class="header__hamburger" type="button" @click="isOpen = !isOpen" aria-label="Open menu">
-        <svg v-if="!isOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
-        </svg>
-        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
-        </svg>
-      </button>
+      <div class="header__mobile-actions">
+        <button type="button" class="header__mobile-search" aria-label="Search" @click="openSearch">
+          <svg class="header__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="m21 21-4.35-4.35" stroke-linecap="round" />
+            <circle cx="11" cy="11" r="7" />
+          </svg>
+        </button>
+
+        <button class="header__hamburger" type="button" @click="isOpen = !isOpen" aria-label="Open menu">
+          <svg v-if="!isOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <transition name="slide-fade">
@@ -86,6 +95,8 @@
         </router-link>
       </div>
     </transition>
+
+    <SearchOverlay :open="isSearchOpen" @close="isSearchOpen = false" />
   </header>
 </template>
 
@@ -93,9 +104,11 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import publicApi from '@/services/publicApi'
+import SearchOverlay from '@/components/client/SearchOverlay.vue'
 
 const isOpen = ref(false)
 const isScrolled = ref(false)
+const isSearchOpen = ref(false)
 const route = useRoute()
 
 const fallbackItems = [
@@ -119,13 +132,17 @@ const fallbackItems = [
 
 const menuItems = ref(fallbackItems)
 const cta = ref({ label: 'Enquire Now', path: '/contact?type=general' })
-const searchPath = ref('/blogs')
 
 const mainItems = computed(() => menuItems.value)
 const mobileItems = computed(() => menuItems.value)
 
 function closeMobile() {
   isOpen.value = false
+}
+
+function openSearch() {
+  isOpen.value = false
+  isSearchOpen.value = true
 }
 
 function handleScroll() {
@@ -160,10 +177,6 @@ async function fetchMenu() {
         path: normalizeCtaPath(data.cta.path, data.cta.label),
       }
     }
-
-    if (data?.search?.path) {
-      searchPath.value = data.search.path
-    }
   } catch {
     // Keep fallback navigation when the API is unavailable.
   }
@@ -173,6 +186,7 @@ watch(
   () => route.fullPath,
   () => {
     isOpen.value = false
+    isSearchOpen.value = false
   },
 )
 
@@ -333,6 +347,12 @@ onUnmounted(() => {
   margin-left: 2rem;
 }
 
+.header__mobile-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .header__divider {
   display: inline-block;
   width: 2px;
@@ -347,11 +367,30 @@ onUnmounted(() => {
   justify-content: center;
   width: 36px;
   height: 36px;
+  border: 0;
+  background: transparent;
   color: #111111;
   border-radius: 50%;
+  cursor: pointer;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
+}
+
+.header__mobile-search {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: #111111;
+  cursor: pointer;
+}
+
+.header__mobile-search:hover {
+  color: #355845;
 }
 
 .header__search:hover {
@@ -462,6 +501,10 @@ onUnmounted(() => {
 @media (min-width: 1024px) {
   .header__right {
     display: flex;
+  }
+
+  .header__mobile-actions {
+    display: none;
   }
 
   .header__hamburger {
